@@ -1,11 +1,23 @@
 
 # 🔐 Windows 10 Compliance Hardening (NIST 800-53 Aligned)
 
-> A hands-on lab where I hardened a misconfigured Windows 10 Pro VM, scanned it using Nessus Essentials from an Ubuntu 22.04 VM, and remediated several medium/high vulnerabilities using PowerShell and registry edits. The project reflects real-world RMF Step 4 (control assessment) and NIST 800-53-aligned hardening techniques.
+> A hands-on lab where I hardened a misconfigured Windows 10 Pro VM, scanned it using Nessus Essentials from an Ubuntu 22.04 VM, and remediated several medium/high vulnerabilities using PowerShell and registry edits. This project is an implementation of RMF Step 4: Assess Security Controls, using system hardening techniques aligned with NIST 800-53 standards.
+---
+
+## Technical Skills
+
+- Windows system hardening
+- Nessus scan analysis & plugin interpretation
+- Registry editing with PowerShell
+- Cipher suite and TLS protocol management
+- Certificate creation & binding (RDP)
+- Security documentation and evidence tracking
+- RMF Step 4: Assessing controls
+- NIST 800-53 control alignment (e.g., SC-12, SC-28, AC-17)
 
 ---
 
-## 📌 Overview
+## 📌 High-Level Overview
 
 This project demonstrates my ability to:
 
@@ -28,6 +40,27 @@ This project demonstrates my ability to:
 | Remediation Tool | PowerShell (Admin)           |
 | Network Config   | Shared virtual network (VNet) with private IPs |
 
+## Preparation:
+
+Before scanning or remediating the system, I performed the following steps to prepare the lab environment:
+
+- Deployed two Azure VMs:  
+  - **Windows 10 Pro** (system with intentional misconfigurations)  
+  - **Ubuntu 22.04** (scanner machine running Nessus Essentials)
+
+- Created a **shared virtual network** so the scanner could reach the target via private IP
+
+- Installed **Nessus Essentials** on Ubuntu using the correct `.deb` package 
+
+---
+## Scenario:
+
+During an internal security audit, a Windows 10 Pro workstation image was found being used across several internal machines. This image had originally been deployed by IT for temporary contractor workstations but had never gone through formal security hardening or baseline validation.
+
+I was tasked with scanning the system, identifying compliance gaps, and remediating misconfigurations based on best practices aligned to NIST 800-53 and the RMF control assessment step (Step 4).
+
+The goal was to bring the system into compliance with internal hardening standards, while also documenting the before/after states for audit reporting and future automation planning.
+
 ---
 
 ## 🚨 Initial Vulnerability Scan (Before Hardening)
@@ -43,6 +76,8 @@ Using Nessus Essentials, I scanned the misconfigured Windows 10 VM and discovere
 | 51192     | SSL Certificate Cannot Be Trusted         | Medium   |
 | 57582     | SSL Self-Signed Certificate               | Medium   |
 
+Initial Scan Results: 
+
 <img width="1017" height="609" alt="Screenshot 2025-10-01 at 10 36 33 PM" src="https://github.com/user-attachments/assets/2453e3a0-cab8-412a-a21d-9f8248f50f53" />
 
 ---
@@ -57,12 +92,20 @@ All remediations were applied manually using **PowerShell (Admin)** sessions and
 | 42873               | Disabled 3DES/RC4 (SWEET32)               | PowerShell     |
 | 57608               | Enforced SMB signing                      | PowerShell     |
 
+
+
+
 📸 **Screenshots**
 Disabling TLS 1.0 and 1.1 while enabling 1.2:
 <img width="785" height="109" alt="Screenshot 2025-10-01 at 9 16 52 PM" src="https://github.com/user-attachments/assets/55ded659-6442-4d39-958f-924e3ee3b4f6" />
 
-Disabled 3DES/RC4 (SWEET32) shown in Nessus scan:
+Scan results after disabling TLS 1.0/1.1 and enabling 1.2:
+<img width="1006" height="430" alt="Screenshot 2025-10-01 at 11 08 47 PM" src="https://github.com/user-attachments/assets/c4758838-2d2b-4fd3-a095-d665f25dce4b" />
 
+
+
+Scan results after remediating SWEET32 and SMB signing misconfiguration vulnerabilities: 
+<img width="1015" height="358" alt="Screenshot 2025-10-01 at 11 04 00 PM" src="https://github.com/user-attachments/assets/8ed8b99f-9b07-4e9e-9ab0-507d76bc777a" />
 
 
 
@@ -76,8 +119,21 @@ Disabled 3DES/RC4 (SWEET32) shown in Nessus scan:
 | `Fix_SWEET32_SMB.ps1`   | Disable weak ciphers, enforce SMB signing |
 | `Fix_Certs.ps1`         | Create and bind lab CA + RDP cert (optional) |
 
-📸 **Screenshot Suggestion:** `screenshots/script-running.png`
+---
 
+## Note on PowerShell Scripts
+
+During the hardening process, I created several PowerShell scripts to apply security settings such as disabling insecure protocols, enforcing SMB signing, and modifying registry keys.
+
+Since these scripts were saved directly to the VM (either from the browser or through file transfer), Windows automatically flagged them as potentially unsafe — a built-in security feature known as the Zone Identifier or "Mark of the Web."
+
+As a result, PowerShell blocked the scripts from running by default, even when I had administrative privileges.
+
+To fix this, I had to manually unblock each script. This is a common step in environments where scripts are shared or downloaded. I used this PowerShell script to allow the scripts to run (of course changing the file name appropriately):
+
+```
+Unblock-File -Path "C:\Users\mmach\Desktop\Fix_TLS.ps1"
+```
 ---
 
 ## ✅ Final Scan Results (After Hardening)
@@ -94,59 +150,23 @@ After applying the remediations, I performed a new Nessus scan. These findings w
 📸 **Screenshots** 
 Final Scan result:
 
-<img width="1010" height="353" alt="Screenshot 2025-10-01 at 10 51 25 PM" src="https://github.com/user-attachments/assets/a6f0d9d0-b059-433b-a447-e42a6025d810" />
+<img width="1015" height="358" alt="Screenshot 2025-10-01 at 11 04 00 PM" src="https://github.com/user-attachments/assets/8ed8b99f-9b07-4e9e-9ab0-507d76bc777a" />
 
 ---
 
-## 📝 Notes on Certificate Findings
+## NIST 800-53 Control Mapping
 
-> I created a lab Root Certificate Authority (CA) and used it to issue a server authentication cert for RDP. While the cert was successfully bound, I chose **not to import the CA into Nessus Trusted CAs** to reflect realistic internal lab limitations.
+| **Remediation**                                               | **Plugin(s) Addressed**   | **Mapped Control(s)**                 | **Why It Matters**                                                                               |
+| ------------------------------------------------------------- | ------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Disabled TLS 1.0 / 1.1**                                    | 104743, 157288            | `SC-12`, `SC-13`, `SC-28`             | Makes sure only modern, secure encryption is used when data is sent across the network           |
+| **Disabled weak ciphers (3DES/RC4)**                          | 42873                     | `SC-12`, `SC-13`, `SC-28`, `SC-28(1)` | Prevents attackers from taking advantage of outdated encryption methods                          |
+| **Enforced SMB Signing**                                      | 57608                     | `SC-7(11)`, `SC-23`, `AC-17(2)`       | Ensures file sharing traffic can't be tampered with or impersonated                              |
+| **Handled script blocking** (unblocked safe scripts manually) | *(observed behavior)*     | `SI-7`, `AC-6`, `CM-6`                | Shows awareness of how Windows protects systems from potentially unsafe or untrusted scripts     |
 
-📸 **Screenshots:** 
-<img width="294" height="28" alt="Screenshot 2025-10-01 at 10 52 31 PM" src="https://github.com/user-attachments/assets/995acd9c-fcec-480f-a228-9082b7502b7f" />
+### 🧠 Reflection
+
+This project simulates how real-world misconfigurations are identified and remediated. I not only learned how to interpret Nessus scan results, but also how to apply safe, targeted fixes using PowerShell in alignment with industry-standard frameworks like NIST 800-53 and the RMF process.
+
+I also had to think critically about which vulnerabilities truly needed to be remediated (e.g., TLS, SMB signing, SWEET32), and which were acceptable to leave in place in an internal lab setting (e.g., certificate trust warnings). Overall, this project helped me connect technical security work with the broader goals of compliance, documentation, and system hardening.
 
 
----
-
-## 💡 Skills Demonstrated
-
-- Windows system hardening
-- Nessus scan analysis & plugin interpretation
-- Registry editing with PowerShell
-- Cipher suite and TLS protocol management
-- Certificate creation & binding (RDP)
-- Security documentation and evidence tracking
-- RMF Step 4: Assessing controls
-- NIST 800-53 control alignment (e.g., SC-12, SC-28, AC-17)
-
----
-
-## 📁 Repo Structure
-
-```
-📁 screenshots/
-  ├─ initial-nessus-scan.png
-  ├─ tls-registry-settings.png
-  ├─ smb-signing-registry.png
-  ├─ final-scan.png
-  ├─ lab-root-ca-export.png
-
-📄 Fix_TLS.ps1
-📄 Fix_SWEET32_SMB.ps1
-📄 Fix_Certs.ps1
-📄 README.md
-```
-
----
-
-## 📆 Project Date
-
-- **Completed:** 2025-10-02
-
----
-
-## ✅ Next Steps
-
-- Import CA into Nessus to clear cert warnings
-- Expand to include PolicyAnalyzer vs Microsoft Baselines
-- Automate scan → fix → re-scan workflows
