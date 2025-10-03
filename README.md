@@ -1,5 +1,5 @@
 
-# 🔐 Vulnerability Remediation on Windows 10 Using Nessus & PowerShell (NIST 800-53, RMF Aligned)
+# 🔐 Vulnerability Remediation on Windows 10 Using Nessus, PowerShell & Ubuntu Server (NIST 800-53, RMF Aligned)
 
 > A hands-on lab where I hardened a misconfigured Windows 10 Pro VM, scanned it using Nessus Essentials from an Ubuntu 22.04 VM, and remediated several medium/high vulnerabilities using PowerShell and registry edits. This project is an implementation of RMF Step 4: Assess Security Controls, using system hardening techniques aligned with NIST 800-53 standards.
 ---
